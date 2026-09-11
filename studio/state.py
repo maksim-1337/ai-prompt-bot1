@@ -29,7 +29,7 @@ class Store:
         if self.remote and (not self.repo or not os.getenv("GH_TOKEN")):
             raise ValueError("GitHub state needs GITHUB_REPOSITORY and GH_TOKEN")
         self.url = f"https://api.github.com/repos/{self.repo}/contents/{path}"
-        self.data = {"version": 1, "offset": 0, "owner": 0, "jobs": {}, "paused": False}
+        self.data = {"version": 1, "offset": 0, "owner": 0, "jobs": {}, "paused": False, "oauth": {}}
         blob = None
         if self.remote:
             r = requests.get(self.url, headers=self.headers, params={"ref": "main"}, timeout=30)
@@ -46,6 +46,12 @@ class Store:
             self.data = json.loads(self.cipher.decrypt(blob))
             if self.data.get("version") != 1:
                 raise ValueError("Unsupported queue version")
+            # Backward-compatible additive fields only. Existing approvals/jobs are preserved.
+            self.data.setdefault("oauth", {})
+            self.data.setdefault("jobs", {})
+            self.data.setdefault("paused", False)
+            self.data.setdefault("offset", 0)
+            self.data.setdefault("owner", 0)
 
     def save(self):
         blob = self.cipher.encrypt(json.dumps(self.data, ensure_ascii=False).encode())
