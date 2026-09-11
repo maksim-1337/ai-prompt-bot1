@@ -2,10 +2,8 @@ name: NewsLightGG Autopilot
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 * * * *"
 
 concurrency:
   group: newslightgg-news-autopilot
@@ -17,7 +15,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -40,10 +38,9 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: "@newsLightGG"
-          TELEGRAM_CHANNEL_SPOKEN_NAME: "Ньюс Лайт"
-          MAX_POST_AGE_HOURS: "12"
-          MIN_NEWS_SCORE: "4.0"
-        run: python runner.py
+          MAX_POST_AGE_HOURS: "10"
+          MIN_NEWS_SCORE: "4.5"
+        run: python main.py
 
       - name: Save published-news state
         if: success()
