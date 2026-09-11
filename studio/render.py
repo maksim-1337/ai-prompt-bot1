@@ -44,7 +44,6 @@ def font(size, bold=True):
 def wrap(draw, text, face, max_width):
     lines, line = [], ""
     for word in text.split():
-        # Break pathological long tokens too, so imported text cannot overflow the canvas.
         chunks = [word]
         if draw.textlength(word, font=face) > max_width:
             chunks, part = [], ""
@@ -93,7 +92,6 @@ def background(path: Path, category: str, variant=0):
     for y in range(0, HEIGHT, 90):
         d.line((0, y, WIDTH, y), fill=(28, 38, 51), width=1)
     cx, cy = 535, 770
-    # Topic illustrations are intentionally graphic, never fake footage of a real event.
     if category == "science":
         for k in range(3):
             r = 210 + k * 72
@@ -137,7 +135,6 @@ def overlay(path, plan, index, total):
     d.text((90, 1150), f"{index+1:02d} / {total:02d}", font=font(30), fill=ACCENT)
     d.line((90, 1210, 900, 1210), fill=(80, 95, 115, 180), width=3)
     d.line((90, 1210, 90+810*(index+1)/total, 1210), fill=ACCENT, width=6)
-    # Entire caption and headline stay above UI controls near the bottom/right edge.
     d.rounded_rectangle((65, 1250, 930, 1605), 30, fill=(8, 14, 26, 235))
     im.save(path)
 
@@ -152,8 +149,9 @@ async def neural_voice(text, output):
     import edge_tts
     voice = os.getenv("STUDIO_VOICE", "ru-RU-DmitryNeural")
     timings = []
+    communicate = edge_tts.Communicate(text, voice, rate="+3%", pitch="-2Hz", volume="+0%", boundary="WordBoundary")
     with output.open("wb") as f:
-        async for chunk in edge_tts.Communicate(text, voice, rate="+7%", boundary="WordBoundary").stream():
+        async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 f.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
@@ -166,16 +164,16 @@ def voice(text, folder, demo=False):
     audio = folder / "voice.mp3"
     quality = "neural"
     if demo:
-        # Offline sample is explicitly marked; silence never enters production rendering.
         audio = folder / "voice.wav"
         duration = max(3.0, len(text.split()) / 2.5)
         if shutil.which("espeak-ng"):
             subprocess.run(["espeak-ng", "-v", "ru", "-s", "162", "-w", str(audio), text], check=True)
+        elif shutil.which("espeak"):
+            subprocess.run(["espeak", "-v", "ru", "-s", "158", "-p", "42", "-w", str(audio), text], check=True)
         else:
             ffmpeg(["-f", "lavfi", "-i", "anullsrc=r=48000:cl=mono", "-t", duration, audio])
         timings, quality = [], "offline-demo"
     else:
-        # A neural TTS outage stops the video instead of silently posting a mute/robotic one.
         timings = asyncio.run(asyncio.wait_for(neural_voice(text, audio), timeout=90))
     if audio.suffix == ".wav":
         import wave
@@ -264,8 +262,9 @@ def render(plan, folder: Path, variant=0, demo=False):
             base_filter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30,eq=brightness=-0.12:saturation=0.9"
         else:
             args += ["-loop", "1", "-framerate", FPS, "-i", bg]
-            assets.append({"type": "original-motion-graphic", "query": scene["query"]})
-            base_filter = "scale=1080:1920,zoompan=z='min(zoom+0.0003,1.07)':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=1080x1920:fps=30,setsar=1"
+            assets.append({"type": "original-static-graphic", "query": scene["query"]})
+            # No zoompan here: the old sub-pixel zoom caused visible micro-jitter on phones.
+            base_filter = "scale=1080:1920,setsar=1,fps=30"
         args += ["-loop", "1", "-i", ui]
         for j, group in enumerate(groups):
             sub = work / f"sub-{j}.png"
@@ -278,11 +277,15 @@ def render(plan, folder: Path, variant=0, demo=False):
         for j, group in enumerate(groups):
             filters.append(f"[v{j}][{j+2}:v]overlay=0:0:enable='between(t,{group['start']:.3f},{group['end']:.3f})'[v{j+1}]")
         output = work / "scene.mp4"
+        final_v = f"[v{len(groups)}]"
+        filters.append(f"{final_v}fade=t=in:st=0:d=0.16,fade=t=out:st={max(duration-0.18,0):.3f}:d=0.18[vout]")
         args += ["-filter_complex_threads", "1", "-filter_complex", ";".join(filters),
-                 "-map", f"[v{len(groups)}]", "-map", f"{audio_index}:a", "-t", f"{duration:.3f}",
+                 "-map", "[vout]", "-map", f"{audio_index}:a", "-t", f"{duration:.3f}",
                  "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
                  "-maxrate", "2600k", "-bufsize", "5200k", "-threads", "2",
-                 "-c:a", "aac", "-ar", "48000", "-b:a", "128k", "-af", "apad", output]
+                 "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+                 "-af", "highpass=f=70,lowpass=f=14500,acompressor=threshold=-18dB:ratio=2.2:attack=15:release=180,alimiter=limit=0.92,apad",
+                 output]
         ffmpeg(args)
         clips.append(output)
         elapsed += duration
