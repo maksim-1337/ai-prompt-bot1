@@ -21,34 +21,8 @@ jobs:
           cache: pip
       - name: Install video dependencies
         run: pip install -r requirements-studio.txt
-      - name: Render real news sample with neural voice
-        env:
-          STUDIO_VOICE: ru-RU-SvetlanaNeural
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          from studio.core import now, plan_from_story
-          from studio.direct_run import _install_production_audio_stage
-          from studio.render import render
-
-          _install_production_audio_stage()
-          story = {
-              'title': 'NASA и IBM обучили ИИ анализировать поверхность Луны',
-              'summary': (
-                  'Новая открытая модель объединяет данные нескольких лунных миссий и помогает распознавать особенности поверхности. '
-                  'Система предназначена для поиска объектов вроде кратеров и потенциальных районов с водяным льдом. '
-                  'Такие инструменты могут помочь исследователям быстрее выбирать интересные и безопасные зоны для будущих миссий.'
-              ),
-              'source': 'NASA / IBM',
-              'link': 'https://www.nasa.gov/',
-              'category': 'science',
-              'published': now(),
-          }
-          plan = plan_from_story(story)
-          plan['label'] = 'КОСМОС / AI'
-          video, manifest = render(plan, Path('output/neural-news'), variant=7, demo=False)
-          print('READY', video, manifest['duration'], manifest['audio'])
-          PY
+      - name: Render real news sample with clear Russian voice
+        run: python -m studio.reference_gtts
       - uses: actions/upload-artifact@v4
         with:
           name: neural-news-video
@@ -57,5 +31,3 @@ jobs:
             output/neural-news/cover.jpg
             output/neural-news/manifest.json
           retention-days: 3
-
-# rerun after edge-tts audio fix
