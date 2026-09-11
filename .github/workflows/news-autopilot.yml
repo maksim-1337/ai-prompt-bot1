@@ -1,4 +1,4 @@
-name: HistoryXYT News Autopilot
+name: NewsLightGG Autopilot
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     - cron: "17 */2 * * *"
 
 concurrency:
-  group: historyxyt-news-autopilot
+  group: newslightgg-news-autopilot
   cancel-in-progress: false
 
 permissions:
@@ -39,10 +39,11 @@ jobs:
       - name: Find, build and publish news
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHANNEL: "@historyXYT"
+          TELEGRAM_CHANNEL: "@newsLightGG"
+          TELEGRAM_CHANNEL_SPOKEN_NAME: "Ньюс Лайт"
           MAX_POST_AGE_HOURS: "12"
           MIN_NEWS_SCORE: "4.0"
-        run: python main.py
+        run: python runner.py
 
       - name: Save published-news state
         if: success()
