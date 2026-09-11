@@ -55,7 +55,8 @@ jobs:
           STUDIO_ACCOUNT_LABEL: ${{ vars.STUDIO_ACCOUNT_LABEL || 'Аккаунты ещё не подключены' }}
           STUDIO_VISIBILITY: ${{ vars.STUDIO_VISIBILITY || 'public' }}
           STUDIO_DAILY_LIMIT: ${{ vars.STUDIO_DAILY_LIMIT || '2' }}
-          STUDIO_VOICE: ${{ vars.STUDIO_VOICE || 'ru-RU-DmitryNeural' }}
+          # Softer, clearer Russian neural narration. Can still be overridden in Variables.
+          STUDIO_VOICE: ${{ vars.STUDIO_VOICE || 'ru-RU-SvetlanaNeural' }}
           STUDIO_TIKTOK_PRIVACY: ${{ vars.STUDIO_TIKTOK_PRIVACY || 'PUBLIC_TO_EVERYONE' }}
           META_API_VERSION: ${{ vars.META_API_VERSION || 'v25.0' }}
         run: python -m studio.direct_run
