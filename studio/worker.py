@@ -6,7 +6,8 @@ from collections import Counter
 from pathlib import Path
 
 from .core import age_hours, clean, decide, digest, fingerprint, may_publish, now, plan_from_story, publication_snapshot
-from .publishers import Ayrshare, YouTube, platform_result
+from .publishers import (Ayrshare, PreflightError, TikTok, UnknownPublishState, YouTube,
+                         direct_provider, platform_result)
 from .render import render
 from .state import Store, media_hash
 from .telegram import Telegram
@@ -18,25 +19,68 @@ class Worker:
         self.state = store.data
         self.channel = os.getenv("TELEGRAM_CHANNEL", "@newsLightGG")
         self.mode = os.getenv("STUDIO_PUBLISHER", "review")
-        if self.mode not in ("review", "ayrshare", "youtube"):
-            raise ValueError("STUDIO_PUBLISHER: review, ayrshare or youtube")
-        self.targets = [] if self.mode == "review" else (
-            ["youtube"] if self.mode == "youtube" else
-            [x.strip() for x in os.getenv("STUDIO_TARGETS", "youtube,instagram,tiktok").split(",") if x.strip()])
-        if len(self.targets) != len(set(self.targets)) or set(self.targets) - {"youtube", "instagram", "tiktok"}:
-            raise ValueError("Invalid publishing targets")
+        if self.mode not in ("review", "direct", "ayrshare", "youtube"):
+            raise ValueError("STUDIO_PUBLISHER: review, direct, ayrshare or youtube")
+        if self.mode == "review":
+            self.targets = []
+        elif self.mode == "youtube":
+            self.targets = ["youtube"]
+        else:
+            default = "youtube,instagram,tiktok,facebook" if self.mode == "direct" else "youtube,instagram,tiktok"
+            self.targets = [x.strip() for x in os.getenv("STUDIO_TARGETS", default).split(",") if x.strip()]
+        allowed = {"youtube", "instagram", "tiktok", "facebook"} if self.mode == "direct" else {
+            "youtube", "instagram", "tiktok"}
+        if len(self.targets) != len(set(self.targets)) or set(self.targets) - allowed:
+            raise ValueError("Invalid publishing targets for selected publisher")
         self.label = os.getenv("STUDIO_ACCOUNT_LABEL", "Аккаунты ещё не подключены")
         self.visibility = os.getenv("STUDIO_VISIBILITY", "public")
         if self.visibility not in ("public", "private"):
             raise ValueError("STUDIO_VISIBILITY must be public or private")
-        if "instagram" in self.targets and self.visibility != "public":
-            raise ValueError("Instagram Reels do not support private publication via this workflow")
+        if ({"instagram", "facebook"} & set(self.targets)) and self.visibility != "public":
+            raise ValueError("Instagram/Facebook Reels require public visibility in this workflow")
+
+    def credential_fingerprint(self):
+        if self.mode == "review":
+            value = {}
+        elif self.mode == "ayrshare":
+            value = {"ayrshare": os.getenv("AYRSHARE_API_KEY", "")}
+        elif self.mode == "youtube":
+            value = {"youtube": os.getenv("YOUTUBE_TOKEN_JSON", "")}
+        else:
+            secrets = {
+                "youtube": os.getenv("YOUTUBE_TOKEN_JSON", ""),
+                "tiktok": os.getenv("TIKTOK_ACCESS_TOKEN", ""),
+                "instagram": [os.getenv("INSTAGRAM_ACCESS_TOKEN", ""), os.getenv("INSTAGRAM_USER_ID", "")],
+                "facebook": os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", ""),
+            }
+            value = {name: secrets[name] for name in self.targets}
+        return digest(value)
 
     def snapshot(self, job):
         snap = publication_snapshot(job, self.targets, self.label, self.mode, self.visibility)
-        credential = os.getenv("AYRSHARE_API_KEY", "") if self.mode == "ayrshare" else os.getenv("YOUTUBE_TOKEN_JSON", "")
-        snap["account_connection"] = digest(credential)
+        snap["account_connection"] = self.credential_fingerprint()
+        snap["platform_settings"] = digest(job.get("platform_meta", {}))
         return snap
+
+    def preflight(self, job):
+        """Validate configured destinations and freeze settings shown for approval."""
+        job["platform_meta"] = {}
+        if self.mode == "review":
+            return
+        if self.mode == "ayrshare":
+            Ayrshare()
+            return
+        if self.mode == "youtube":
+            YouTube()
+            return
+        for platform in self.targets:
+            provider = direct_provider(platform)
+            if platform == "tiktok":
+                meta = provider.review_info(self.visibility)
+                maximum = meta.get("max_video_post_duration_sec")
+                if maximum and float(job.get("manifest", {}).get("duration", 0)) > float(maximum):
+                    raise PreflightError("Rendered video exceeds this TikTok account's duration limit")
+                job["platform_meta"]["tiktok"] = meta
 
     def keyboard(self, job):
         suffix = f"{job['id']}:{job['revision']}"
@@ -54,7 +98,8 @@ class Worker:
                     "rejected": "Отклонены", "expired": "Устарели", "processing": "Площадки обрабатывают"}
         lines = [f"{readable.get(k,k)}: {v}" for k, v in counts.items()]
         return ("NewsLight Studio\n" + ("Пауза\n" if self.state["paused"] else "Работает\n")
-                + f"Площадки: {', '.join(self.targets) or 'пока только предпросмотр'}\n" + "\n".join(lines))
+                + f"Режим: {self.mode}\nПлощадки: {', '.join(self.targets) or 'пока только предпросмотр'}\n"
+                + "\n".join(lines))
 
     def updates(self):
         if self.tg.call("getWebhookInfo").get("url"):
@@ -80,7 +125,7 @@ class Worker:
                 self.tg.answer(callback["id"], "Одобрять может только владелец канала")
                 return
             if action == "approve" and job.get("snapshot") != self.snapshot(job):
-                self.tg.answer(callback["id"], "Настройки изменились. Нужен новый предпросмотр")
+                self.tg.answer(callback["id"], "Аккаунт или настройки изменились. Нужен новый предпросмотр")
                 return
             accepted = decide(job, action, int(revision), callback["from"]["id"], self.state["owner"])
             self.store.save()
@@ -95,7 +140,6 @@ class Worker:
         actor = message["from"]["id"]
         text = message.get("text", "").strip()
         if not self.state["owner"] and text.startswith("/start"):
-            # No first-visitor account takeover: Telegram must verify the CHANNEL OWNER.
             member = self.tg.call("getChatMember", {"chat_id": self.channel, "user_id": actor})
             if member.get("status") != "creator":
                 return
@@ -104,13 +148,12 @@ class Worker:
         if actor != self.state["owner"]:
             return
         if text.startswith(("/start", "/help")):
-            self.tg.message(actor, "Это NewsLight Studio. Я пришлю готовые ролики для проверки.\n"
-                "После одобрения отправлю в подключённые аккаунты.\n\n"
-                "/status — очередь\n/pause — остановить подготовку и публикации\n/resume — продолжить\n"
-                "/caption ID новый текст — изменить подпись и заново проверить ролик\n"
-                "/retry ID — повторить подготовку после ошибки\n\n"
-                "В GitHub Actions ответы появляются при следующем запуске, обычно через 15–30 минут.\n"
-                "Базовый режим: только предпросмотр; аккаунты подключаются отдельно.")
+            self.tg.message(actor, "Это NewsLight Studio. Я сам готовлю короткие ролики из новостей.\n"
+                "Ты только проверяешь ролик и нажимаешь ✅ Одобрить. После этого он уходит в подключённые соцсети.\n\n"
+                "/status — очередь и площадки\n/pause — остановить подготовку и публикации\n/resume — продолжить\n"
+                "/caption ID новый текст — изменить подпись и запросить новое одобрение\n"
+                "/retry ID — повторить подготовку после безопасной ошибки\n\n"
+                "Ответы обрабатываются следующим запуском GitHub Actions, обычно в течение 15–30 минут.")
         elif text == "/pause":
             self.state["paused"] = True
             self.store.save()
@@ -136,7 +179,7 @@ class Worker:
             if job and job["state"] == "failed":
                 job["state"] = "queued"
                 self.store.save()
-                self.tg.message(actor, "Повторю подготовку. Публикация потребует одобрения.")
+                self.tg.message(actor, "Повторю подготовку. Публикация снова потребует одобрения.")
 
     def intake(self):
         path = Path("data/video-inbox.json")
@@ -172,12 +215,13 @@ class Worker:
                                      variant=job["revision"])
             job["media_sha256"] = media_hash(video)
             job["manifest"] = manifest
+            self.preflight(job)
             job["snapshot"] = self.snapshot(job)
         except Exception as exc:
             job["state"], job["error"] = "failed", type(exc).__name__
             self.store.save()
             self.tg.message(self.state["owner"], f"Не удалось подготовить {job['id']}. Причина: {type(exc).__name__}.\n"
-                            "Ролик не отправлялся в соцсети. После исправления: /retry " + job["id"])
+                            "Ничего не отправлялось в соцсети. После исправления: /retry " + job["id"])
             return
         source = job["plan"]["sources"][0]
         review = (f"Ролик {job['id']} · версия {job['revision']}\n\n{job['plan']['caption']}\n\n"
@@ -186,10 +230,18 @@ class Worker:
                   "Озвучка: синтезированный голос. Видеоряд: иллюстративные футажи / графика.\n"
                   f"{job['plan']['verification']}\nИсточник для проверки: {source['name']} {source['url']}\n\n"
                   "Это служебное сообщение. Источник не добавляется в подпись соцсетей.")
-        if "tiktok" in self.targets:
-            review += ("\nОдобрение включает согласие с Music Usage Confirmation TikTok: "
-                       "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en\n"
-                       "Комментарии, дуэты и stitch выключены. Музыка не добавляется.")
+        meta = job.get("platform_meta", {}).get("tiktok")
+        if meta:
+            name = meta.get("creator_nickname") or meta.get("creator_username") or "подключённый аккаунт"
+            username = (" @" + meta["creator_username"]) if meta.get("creator_username") else ""
+            interactions = ", ".join([
+                "комментарии выкл." if meta.get("disable_comment") else "комментарии вкл.",
+                "дуэты выкл." if meta.get("disable_duet") else "дуэты вкл.",
+                "stitch выкл." if meta.get("disable_stitch") else "stitch вкл.",
+            ])
+            review += (f"\nTikTok: {name}{username}\nПриватность: {meta.get('privacy')}\n{interactions}\n"
+                       "Ролик будет отмечен как AI-generated; платная/брендовая интеграция выключена.\n"
+                       "Музыка в ролик не добавляется.")
         job["state"] = "preview_sending"
         self.store.save()
         try:
@@ -203,7 +255,6 @@ class Worker:
             job["state"] = "review"
             self.store.save()
         except Exception:
-            # An unconfirmed send must not cause an automatic second send.
             job["state"] = "unknown"
             self.store.save()
             raise
@@ -214,11 +265,14 @@ class Worker:
             job.pop("approval", None)
             self.store.save()
             return
-        # Fail before remote writes if account credentials are missing.
+        providers = {}
         if self.mode == "ayrshare":
-            provider = Ayrshare()
+            shared_provider = Ayrshare()
         elif self.mode == "youtube":
-            provider = YouTube()
+            shared_provider = YouTube()
+        elif self.mode == "direct":
+            providers = {platform: direct_provider(platform) for platform in self.targets}
+            shared_provider = None
         else:
             return
         folder = Path("output/studio") / job["id"]
@@ -227,22 +281,25 @@ class Worker:
         if media_hash(path) != job["media_sha256"]:
             raise RuntimeError("Approved file hash mismatch; refusing to publish")
         if self.mode == "ayrshare" and not job.get("media_url"):
-            job["media_url"] = provider.upload(path)
+            job["media_url"] = shared_provider.upload(path)
             self.store.save()
         for platform in self.targets:
             if platform in job["deliveries"]:
                 continue
-            # Persist intent before API request. On timeout/crash do not blindly duplicate it.
             delivery = {"state": "sending", "at": now()}
             job["deliveries"][platform] = delivery
             self.store.save()
             try:
                 if self.mode == "ayrshare":
-                    result = provider.publish(job, platform, job["media_url"], self.visibility)
+                    result = shared_provider.publish(job, platform, job["media_url"], self.visibility)
                     delivery.update(platform_result(result, platform), remote_id=result["id"])
+                elif self.mode == "youtube":
+                    delivery.update(shared_provider.publish(job, path, self.visibility))
                 else:
-                    delivery.update(provider.publish(job, path, self.visibility))
-            except Exception as exc:
+                    delivery.update(providers[platform].publish(job, path, self.visibility))
+            except PreflightError as exc:
+                delivery.update(state="failed", error=type(exc).__name__)
+            except (UnknownPublishState, Exception) as exc:
                 delivery.update(state="unknown", error=type(exc).__name__)
             self.store.save()
         job["state"] = "processing"
@@ -250,20 +307,39 @@ class Worker:
 
     def reconcile(self, job):
         for platform, delivery in job["deliveries"].items():
-            if delivery["state"] == "sending":
+            if delivery["state"] in ("sending", "finalizing"):
                 delivery["state"] = "unknown"
-            elif delivery["state"] == "processing" and delivery.get("remote_id"):
-                try:
-                    delivery.update(platform_result(Ayrshare().status(delivery["remote_id"]), platform))
-                except Exception:
+                continue
+            if delivery["state"] != "processing" or not delivery.get("remote_id"):
+                continue
+            try:
+                if self.mode == "ayrshare":
+                    result = platform_result(Ayrshare().status(delivery["remote_id"]), platform)
+                elif self.mode == "direct":
+                    provider = direct_provider(platform)
+                    result = provider.status(delivery["remote_id"])
+                    if platform == "instagram" and result.get("state") == "ready":
+                        delivery["state"] = "finalizing"
+                        self.store.save()
+                        try:
+                            result = provider.finalize(delivery["remote_id"])
+                        except Exception as exc:
+                            delivery.update(state="unknown", error=type(exc).__name__)
+                            self.store.save()
+                            continue
+                else:
                     continue
+                delivery.update(result)
+            except Exception:
+                continue
         self.store.save()
-        if any(d["state"] == "processing" for d in job["deliveries"].values()):
+        if any(d["state"] in ("processing", "finalizing") for d in job["deliveries"].values()):
             return
         job["state"] = "complete"
         self.store.save()
-        labels = {"published": "Опубликовано", "uploaded": "Загружено; видимость зависит от YouTube/API",
-                  "failed": "Ошибка площадки", "unknown": "Результат неизвестен: проверь аккаунт вручную"}
+        labels = {"published": "Опубликовано", "uploaded": "Загружено",
+                  "failed": "Не опубликовано: безопасная ошибка до публикации",
+                  "unknown": "Результат неизвестен: проверь аккаунт вручную"}
         report = ["Результат: " + job["plan"]["title"]]
         for p, d in job["deliveries"].items():
             report.append(f"{p}: {labels.get(d['state'], d['state'])} {d.get('url', '')}")
@@ -276,7 +352,7 @@ class Worker:
             return
         for job in self.state["jobs"].values():
             if job["state"] == "rendering":
-                job["state"] = "queued"  # no external effects have started
+                job["state"] = "queued"
             elif job["state"] == "preview_sending":
                 job["state"] = "unknown"
             if job["state"] == "processing":
