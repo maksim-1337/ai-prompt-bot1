@@ -639,6 +639,8 @@ def main() -> None:
     telegram_send_video(video, build_post(story))
     seen_list.append(story.key)
     save_seen(seen_list)
+    from studio.inbox import enqueue
+    enqueue(story)
     print("Published successfully.")
 
 

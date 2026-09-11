@@ -1,0 +1,8 @@
+Pillow>=11.1,<13
+cryptography>=44,<47
+edge-tts==7.2.3
+imageio-ffmpeg==0.6.0
+mutagen==1.47.0
+google-api-python-client>=2.160,<3
+google-auth>=2.38,<3
+google-auth-oauthlib>=1.2,<2

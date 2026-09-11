@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+!.env.example
+output/
+*.token.json
+client_secret*.json
+youtube-token.json
+data/*.tmp
+.pytest_cache/
+.ruff_cache/

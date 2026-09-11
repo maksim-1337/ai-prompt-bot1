@@ -1,0 +1,46 @@
+name: NewsLight Video Studio
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+
+# The same group as the producer: neither workflow can cancel a publishing transaction.
+concurrency:
+  group: newslightgg-news-autopilot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  studio:
+    if: vars.STUDIO_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install studio dependencies
+        run: pip install -r requirements-studio.txt
+      - name: Check approvals, render and publish approved videos
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: "@newsLightGG"
+          GH_TOKEN: ${{ github.token }}
+          STUDIO_STATE_KEY: ${{ secrets.STUDIO_STATE_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          AYRSHARE_API_KEY: ${{ secrets.AYRSHARE_API_KEY }}
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          STUDIO_PUBLISHER: ${{ vars.STUDIO_PUBLISHER || 'review' }}
+          STUDIO_TARGETS: ${{ vars.STUDIO_TARGETS || 'youtube,instagram,tiktok' }}
+          STUDIO_ACCOUNT_LABEL: ${{ vars.STUDIO_ACCOUNT_LABEL || 'Аккаунты ещё не подключены' }}
+          STUDIO_VISIBILITY: ${{ vars.STUDIO_VISIBILITY || 'public' }}
+          STUDIO_DAILY_LIMIT: ${{ vars.STUDIO_DAILY_LIMIT || '2' }}
+          STUDIO_VOICE: ${{ vars.STUDIO_VOICE || 'ru-RU-DmitryNeural' }}
+        run: python -m studio run
