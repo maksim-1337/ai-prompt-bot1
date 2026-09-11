@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from gtts import gTTS
-from mutagen import File as AudioFile
 
 from .core import now, plan_from_story
 from .direct_run import _install_production_audio_stage
@@ -11,11 +10,11 @@ from . import render as render_module
 def clear_voice(text, folder, demo=False):
     audio = folder / "voice.mp3"
     gTTS(text=text, lang="ru", slow=False).save(str(audio))
-    media = AudioFile(str(audio))
-    if not media or not media.info.length:
-        raise RuntimeError("gTTS returned invalid audio")
-    duration = float(media.info.length) + 0.20
+    if not audio.exists() or audio.stat().st_size < 1000:
+        raise RuntimeError("gTTS returned empty audio")
     words = text.split()
+    # Use a deliberately conservative scene length so the final words are never cut.
+    duration = max(4.8, len(words) / 1.75 + 0.7)
     timings = [
         {"text": w, "start": i * duration / len(words), "end": (i + 1) * duration / len(words)}
         for i, w in enumerate(words)
