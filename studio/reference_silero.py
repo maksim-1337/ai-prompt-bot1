@@ -12,7 +12,6 @@ from . import render as render_module
 
 SAMPLE_RATE = 48000
 SPEAKER = os.getenv("SILERO_SPEAKER", "aidar")
-MODEL_URL = "https://models.silero.ai/models/tts/ru/v5_ru.pt"
 _MODEL = None
 
 
@@ -20,12 +19,13 @@ def load_model():
     global _MODEL
     if _MODEL is not None:
         return _MODEL
-    cache = Path.home() / ".cache" / "newslight"
-    cache.mkdir(parents=True, exist_ok=True)
-    local = cache / "silero_v5_ru.pt"
-    if not local.exists():
-        torch.hub.download_url_to_file(MODEL_URL, str(local), progress=True)
-    model = torch.package.PackageImporter(str(local)).load_pickle("tts_models", "model")
+    model, _ = torch.hub.load(
+        repo_or_dir="snakers4/silero-models",
+        model="silero_tts",
+        language="ru",
+        speaker="v4_ru",
+        trust_repo=True,
+    )
     model.to(torch.device("cpu"))
     torch.set_num_threads(4)
     _MODEL = model
