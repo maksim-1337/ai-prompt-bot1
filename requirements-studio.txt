@@ -1,6 +1,7 @@
 Pillow>=11.1,<13
 cryptography>=44,<47
 edge-tts==7.2.6
+gTTS==2.5.4
 imageio-ffmpeg==0.6.0
 mutagen==1.47.0
 google-api-python-client>=2.160,<3
