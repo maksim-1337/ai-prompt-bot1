@@ -58,4 +58,4 @@ jobs:
           STUDIO_VOICE: ${{ vars.STUDIO_VOICE || 'ru-RU-DmitryNeural' }}
           STUDIO_TIKTOK_PRIVACY: ${{ vars.STUDIO_TIKTOK_PRIVACY || 'PUBLIC_TO_EVERYONE' }}
           META_API_VERSION: ${{ vars.META_API_VERSION || 'v25.0' }}
-        run: python -m studio run
+        run: python -m studio.direct_run
