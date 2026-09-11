@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "7,22,37,52 * * * *"
 
-# The same group as the producer: neither workflow can cancel a publishing transaction.
+# News producer and publisher must never overlap a state-writing transaction.
 concurrency:
   group: newslightgg-news-autopilot
   cancel-in-progress: false
@@ -35,12 +35,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           STUDIO_STATE_KEY: ${{ secrets.STUDIO_STATE_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+
+          # Optional paid fallback. Direct mode below does not require Ayrshare.
           AYRSHARE_API_KEY: ${{ secrets.AYRSHARE_API_KEY }}
+
+          # Official direct publishing credentials.
           YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+
+          # Keep review until the owner finishes one-time social account authorization.
           STUDIO_PUBLISHER: ${{ vars.STUDIO_PUBLISHER || 'review' }}
-          STUDIO_TARGETS: ${{ vars.STUDIO_TARGETS || 'youtube,instagram,tiktok' }}
+          STUDIO_TARGETS: ${{ vars.STUDIO_TARGETS || 'youtube,instagram,tiktok,facebook' }}
           STUDIO_ACCOUNT_LABEL: ${{ vars.STUDIO_ACCOUNT_LABEL || 'Аккаунты ещё не подключены' }}
           STUDIO_VISIBILITY: ${{ vars.STUDIO_VISIBILITY || 'public' }}
           STUDIO_DAILY_LIMIT: ${{ vars.STUDIO_DAILY_LIMIT || '2' }}
           STUDIO_VOICE: ${{ vars.STUDIO_VOICE || 'ru-RU-DmitryNeural' }}
+          STUDIO_TIKTOK_PRIVACY: ${{ vars.STUDIO_TIKTOK_PRIVACY || 'PUBLIC_TO_EVERYONE' }}
+          META_API_VERSION: ${{ vars.META_API_VERSION || 'v25.0' }}
         run: python -m studio run
