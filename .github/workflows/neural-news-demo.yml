@@ -23,6 +23,7 @@ jobs:
         run: |
           pip install -r requirements-studio.txt
           pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy omegaconf
       - name: Render real news sample with natural male Russian voice
         env:
           SILERO_SPEAKER: aidar
