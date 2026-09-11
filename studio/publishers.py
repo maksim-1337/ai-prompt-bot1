@@ -22,7 +22,7 @@ class Ayrshare:
     def __init__(self, key=None):
         key = key or os.getenv("AYRSHARE_API_KEY", "")
         if not key:
-            raise RuntimeError("AYRSHARE_API_KEY is not configured")
+            raise PreflightError("AYRSHARE_API_KEY is not configured")
         self.headers = {"Authorization": "Bearer " + key}
 
     def upload(self, path: Path):
@@ -110,8 +110,8 @@ class YouTube:
                 _, response = request.next_chunk(num_retries=0)
         except Exception as exc:
             raise UnknownPublishState(type(exc).__name__) from None
-        return {"state": "uploaded", "id": response["id"],
-                "visibility": response.get("status", {}).get("privacyStatus", "unknown"),
+        return {"state": "published", "id": response["id"],
+                "visibility": response.get("status", {}).get("privacyStatus", visibility),
                 "url": "https://youtube.com/shorts/" + response["id"]}
 
 
@@ -149,13 +149,15 @@ class TikTok:
         requested = os.getenv("STUDIO_TIKTOK_PRIVACY",
                               "PUBLIC_TO_EVERYONE" if visibility == "public" else "SELF_ONLY")
         options = info.get("privacy_level_options", [])
+        if requested not in options:
+            raise PreflightError("Requested TikTok privacy is not available for this account: " + ",".join(options))
         return {"creator_username": info.get("creator_username", ""),
                 "creator_nickname": info.get("creator_nickname", ""),
                 "privacy": requested, "privacy_options": options,
                 "max_video_post_duration_sec": info.get("max_video_post_duration_sec"),
-                "comment_disabled": bool(info.get("comment_disabled")),
-                "duet_disabled": bool(info.get("duet_disabled")),
-                "stitch_disabled": bool(info.get("stitch_disabled"))}
+                "disable_comment": bool(info.get("comment_disabled", False)),
+                "disable_duet": bool(info.get("duet_disabled", False)),
+                "disable_stitch": bool(info.get("stitch_disabled", False))}
 
     def publish(self, job, path: Path, visibility):
         approved = job.get("platform_meta", {}).get("tiktok") or self.review_info(visibility)
@@ -163,14 +165,26 @@ class TikTok:
         privacy = approved.get("privacy")
         if privacy not in current.get("privacy_level_options", []):
             raise PreflightError("Approved TikTok privacy is no longer available; request a new preview")
+        if approved.get("creator_username") and approved.get("creator_username") != current.get("creator_username"):
+            raise PreflightError("TikTok account changed after approval; request a new preview")
+        for approved_key, current_key in (("disable_comment", "comment_disabled"),
+                                          ("disable_duet", "duet_disabled"),
+                                          ("disable_stitch", "stitch_disabled")):
+            if bool(approved.get(approved_key)) != bool(current.get(current_key)):
+                raise PreflightError("TikTok interaction settings changed after approval; request a new preview")
+        max_duration = approved.get("max_video_post_duration_sec")
+        if max_duration and float(job.get("manifest", {}).get("duration", 0)) > float(max_duration):
+            raise PreflightError("Video is longer than the current TikTok account limit")
         size = path.stat().st_size
         if size <= 0 or size > 64 * 1024 * 1024:
             raise PreflightError("TikTok direct uploader expects a video between 1 byte and 64 MB")
         post_info = {"title": job["plan"]["caption"][:2200], "privacy_level": privacy,
-                     "disable_comment": bool(current.get("comment_disabled", False)),
-                     "disable_duet": bool(current.get("duet_disabled", False)),
-                     "disable_stitch": bool(current.get("stitch_disabled", False)),
-                     "video_cover_timestamp_ms": 1000}
+                     "disable_comment": bool(approved.get("disable_comment")),
+                     "disable_duet": bool(approved.get("disable_duet")),
+                     "disable_stitch": bool(approved.get("disable_stitch")),
+                     "video_cover_timestamp_ms": 1000,
+                     "brand_content_toggle": False, "brand_organic_toggle": False,
+                     "is_aigc": True}
         body = {"post_info": post_info,
                 "source_info": {"source": "FILE_UPLOAD", "video_size": size,
                                 "chunk_size": size, "total_chunk_count": 1}}
@@ -183,7 +197,7 @@ class TikTok:
         payload = path.read_bytes()
         try:
             upload = requests.put(upload_url,
-                                  headers={"Content-Type": "video/mp4",
+                                  headers={"Content-Type": "video/mp4", "Content-Length": str(size),
                                            "Content-Range": f"bytes 0-{size-1}/{size}"},
                                   raw=payload, timeout=240)
         except Exception as exc:
@@ -207,7 +221,7 @@ class TikTok:
 
 
 class Instagram:
-    """Official Instagram Reels publishing with resumable local video upload."""
+    """Official Instagram Reels publishing with a resumable local upload."""
     def __init__(self):
         self.token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
         self.user_id = os.getenv("INSTAGRAM_USER_ID", "")
@@ -240,7 +254,7 @@ class Instagram:
             raise UnknownPublishState(type(exc).__name__) from None
         if not upload.ok:
             raise UnknownPublishState(f"Instagram upload HTTP {upload.status_code}")
-        return {"state": "processing", "remote_id": container}
+        return {"state": "processing", "phase": "uploaded", "remote_id": container}
 
     def status(self, container):
         r = requests.get(f"{self.graph}/{container}", params={
@@ -253,8 +267,11 @@ class Instagram:
             return {"state": "failed", "error": data.get("status", status)}
         if status == "PUBLISHED":
             return {"state": "published", "id": container}
-        if status != "FINISHED":
-            return {"state": "processing"}
+        if status == "FINISHED":
+            return {"state": "ready"}
+        return {"state": "processing"}
+
+    def finalize(self, container):
         try:
             final = requests.post(f"{self.graph}/{self.user_id}/media_publish", data={
                 "creation_id": container, "access_token": self.token}, timeout=60)
