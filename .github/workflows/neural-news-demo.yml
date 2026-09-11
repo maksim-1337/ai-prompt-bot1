@@ -31,3 +31,5 @@ jobs:
             output/neural-news/cover.jpg
             output/neural-news/manifest.json
           retention-days: 3
+
+# rebuild after duration-probe fix
