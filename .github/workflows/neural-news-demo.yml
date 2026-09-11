@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,16 +20,18 @@ jobs:
           python-version: '3.11'
           cache: pip
       - name: Install video dependencies
-        run: pip install -r requirements-studio.txt
-      - name: Render real news sample with clear Russian voice
-        run: python -m studio.reference_gtts
+        run: |
+          pip install -r requirements-studio.txt
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Render real news sample with natural male Russian voice
+        env:
+          SILERO_SPEAKER: aidar
+        run: python -m studio.reference_silero
       - uses: actions/upload-artifact@v4
         with:
-          name: neural-news-video
+          name: male-news-video
           path: |
-            output/neural-news/short.mp4
-            output/neural-news/cover.jpg
-            output/neural-news/manifest.json
+            output/male-news/short.mp4
+            output/male-news/cover.jpg
+            output/male-news/manifest.json
           retention-days: 3
-
-# rebuild after duration-probe fix
