@@ -3,7 +3,7 @@ name: NewsLightGG Autopilot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "47 */3 * * *"
+    - cron: "17 */2 * * *"
   push:
     branches: [main]
     paths:
@@ -51,10 +51,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Find fresh news and publish text-only post
+      - name: Find fresh news and publish YEP-like text post
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
-          MAX_POST_AGE_HOURS: '18'
-          MIN_NEWS_SCORE: '3.8'
+          MAX_POST_AGE_HOURS: '14'
+          MIN_NEWS_SCORE: '3.4'
         run: python text_autopost_runner.py
