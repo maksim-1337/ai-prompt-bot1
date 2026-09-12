@@ -44,6 +44,14 @@
       "source": "iXBT",
       "source_url": "https://www.ixbt.com/news/2026/09/12/biostar-reklamiruet-geforce-gt-730-o-kotoroi-uze-vse-davno-zabyli.html",
       "mode": "draft-delay-text"
+    },
+    "6a32a41b8fe2d434c6ee8476": {
+      "title": "Норрис сенсационно выиграл квалификацию Гран-при Испании \"Формулы-1\"",
+      "published_at": "2026-09-12T19:24:54+00:00",
+      "message_id": 25,
+      "source": "РИА Новости",
+      "source_url": "https://ria.ru/20260912/formula-1-2117330324.html",
+      "mode": "draft-delay-text"
     }
   }
 }
