@@ -1,0 +1,50 @@
+{
+  "category": "💻 Технологии",
+  "channel": "@newsLightGG",
+  "event_date": "2026-09-12",
+  "event_key": "anthropic_amodei_pace_frontier_2026_09_12",
+  "news_published_at": "2026-09-12T14:23:00+00:00",
+  "paragraphs": [
+    "Глава Anthropic Дарио Амодеи 12 сентября предложил замедлить развитие самых мощных ИИ-моделей. Это компания, создавшая Claude. По его мнению, работа над безопасностью не успевает за ростом возможностей нейросетей.",
+    "Первый шаг компания обещает сделать сама: дать внешним проверяющим постоянный доступ к внутренним инструментам и процессам. Они смогут проверять меры безопасности и публиковать выводы, в том числе неудобные для Anthropic.",
+    "Дальше Амодеи предлагает договориться об общих правилах между компаниями и странами. Речь не о закрытии Claude или остановке всех исследований, а о времени на проверки. Пока это план: общего соглашения о замедлении отрасли не объявлено."
+  ],
+  "photo": {
+    "credit": "Иллюстрация: серверное оборудование. Taylor Vick / Unsplash.",
+    "height": 1684,
+    "kind": "illustrative",
+    "rights": "Страница конкретного фото указывает Unsplash License. Прочитанная лицензия разрешает бесплатные копирование и распространение, включая коммерческое использование, без обязательной атрибуции или ссылки. Не Unsplash+. Кредит дан добровольно.",
+    "rights_url": "https://unsplash.com/license",
+    "source_page": "https://unsplash.com/photos/cable-network-M5tzZtFCOfs",
+    "subject": "Архивное фото серверных шкафов с сетевым оборудованием и кабелями; Taylor Vick, University of Washington, Seattle, опубликовано на Unsplash 22 мая 2019. Не помещение Anthropic и не кадр заявления.",
+    "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=60&w=3000",
+    "visually_checked": true,
+    "width": 3000
+  },
+  "schema_version": 1,
+  "sources": [
+    {
+      "full_text_read": true,
+      "independence_group": "amodei_pace_frontier_essay",
+      "url": "https://darioamodei.com/post/we-must-pace-the-frontier"
+    },
+    {
+      "full_text_read": true,
+      "independence_group": "amodei_pace_frontier_essay",
+      "url": "https://www.reuters.com/business/anthropic-ceo-urges-ai-companies-slow-model-development-2026-09-12/"
+    },
+    {
+      "full_text_read": true,
+      "independence_group": "amodei_pace_frontier_essay",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/994337/anthropic-ceo-slow-down-ai-development"
+    }
+  ],
+  "status": "ready",
+  "title": "🧠 Глава Anthropic призвал притормозить гонку ИИ",
+  "verification": {
+    "level": "official_announcement",
+    "note": "Прочитаны эссе и полные Reuters/The Verge; сообщения основаны на одном заявлении, не двух независимых проверках исполнения. Подтверждён анонс, не внедрение или эффективность. news_published_at — явно указанное время Reuters; день заявления подтверждает Reuters. Ограниченные исключения из доступа и публикации выводов предусмотрены для защищённых сведений."
+  },
+  "verified_at": "2026-09-12T18:12:54+00:00",
+  "virality": 8
+}
