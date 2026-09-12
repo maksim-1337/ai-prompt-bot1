@@ -9,6 +9,7 @@ on:
     paths:
       - 'autopost_news.py'
       - 'autopost_runner.py'
+      - 'ai_cover.py'
       - 'news_sources.py'
       - 'main.py'
       - 'requirements.txt'
@@ -24,7 +25,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,18 +40,23 @@ jobs:
       - name: Install news dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Self-test branded cover and Telegram caption
-        run: python autopost_news.py --self-test
+      - name: Self-test AI cover compositor and Telegram caption
+        run: |
+          python ai_cover.py --self-test
+          python autopost_news.py --self-test
 
       - name: Configure publication state author
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Find and publish one fresh branded news post
+      - name: Find news, generate unique AI image and publish
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_IMAGE_MODEL: 'gpt-image-2.5-flare'
+          OPENAI_IMAGE_QUALITY: 'low'
           MAX_POST_AGE_HOURS: '18'
           MIN_NEWS_SCORE: '3.8'
         run: python autopost_runner.py
