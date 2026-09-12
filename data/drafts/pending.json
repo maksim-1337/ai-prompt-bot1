@@ -3,7 +3,7 @@
   "drafts": [
     {
       "story_id": "67723a618edf3ec27a059399",
-      "status": "pending",
+      "status": "published",
       "created_at": "2026-09-12T12:33:35+00:00",
       "publish_after": "2026-09-12T13:33:35+00:00",
       "title": "Biostar рекламирует GeForce GT 730, о которой уже все давно забыли",
@@ -11,6 +11,20 @@
       "source": "iXBT",
       "source_url": "https://www.ixbt.com/news/2026/09/12/biostar-reklamiruet-geforce-gt-730-o-kotoroi-uze-vse-davno-zabyli.html",
       "editorial_score": 8.8,
+      "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip.",
+      "published_at": "2026-09-12T16:21:23+00:00",
+      "message_id": 24
+    },
+    {
+      "story_id": "6a32a41b8fe2d434c6ee8476",
+      "status": "pending",
+      "created_at": "2026-09-12T16:21:35+00:00",
+      "publish_after": "2026-09-12T17:21:35+00:00",
+      "title": "Норрис сенсационно выиграл квалификацию Гран-при Испании \"Формулы-1\"",
+      "text": "Норрис сенсационно выиграл квалификацию Гран-при Испании &quot;Формулы-1&quot;.\n\nБританский пилот &quot;Макларена&quot; Ландо Норрис стал победителем квалификации к гонке 14-го этапа чемпионата &quot;Формулы-1&quot; - Гран-при Испании, который проходит на...\n\nРИА Новости Спорт, 12.09.2026\n\nСписок причин открыть игру стал длиннее. 🎮",
+      "source": "РИА Новости",
+      "source_url": "https://ria.ru/20260912/formula-1-2117330324.html",
+      "editorial_score": 10.7,
       "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip."
     }
   ]
