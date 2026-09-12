@@ -7,6 +7,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'draft_queue_runner.py'
       - 'text_autopost_runner.py'
       - 'autopost_news.py'
       - 'news_sources.py'
@@ -51,10 +52,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Find fresh news and publish YEP-like text post
+      - name: Publish due draft and prepare next editable draft
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
           MAX_POST_AGE_HOURS: '14'
           MIN_NEWS_SCORE: '3.4'
-        run: python text_autopost_runner.py
+          DRAFT_DELAY_MINUTES: '60'
+        run: python draft_queue_runner.py
