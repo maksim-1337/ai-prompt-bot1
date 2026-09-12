@@ -2,6 +2,8 @@
   "event_key": "roblox_everywhere_browser_offline_announcement_2026-09-11",
   "channel": "@newsLightGG",
   "chat_id": -1004433817207,
-  "status": "sending",
-  "attempted_at": "2026-09-12T08:34:36.550968+00:00"
+  "status": "published",
+  "attempted_at": "2026-09-12T08:34:36.550968+00:00",
+  "message_id": 17,
+  "url": "https://t.me/newsLightGG/17"
 }
