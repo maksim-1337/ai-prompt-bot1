@@ -1,4 +1,4 @@
-name: NewsLightGG Photo Autopilot
+name: NewsLightGG Autopilot
 
 on:
   workflow_dispatch:
@@ -7,9 +7,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'data/editorial-queue/*.json'
-      - 'photo_publish.py'
-      - 'tests/test_photo_publish.py'
+      - 'autopost_news.py'
+      - 'main.py'
+      - 'requirements.txt'
       - '.github/workflows/news-autopilot.yml'
 
 concurrency:
@@ -22,28 +22,30 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Test photo delivery and duplicate protection
-        run: python -m unittest discover -s tests -p test_photo_publish.py -v
-      - name: Configure state author
+          cache: pip
+
+      - name: Install news dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Configure publication state author
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Publish at most one verified photo post
+
+      - name: Find and publish one fresh styled news post
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: python photo_publish.py
-      - name: Preserve receipt if state push failed
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: photo-publication-receipt-${{ github.run_id }}
-          path: data/photo-publications.json
-          retention-days: 14
+          TELEGRAM_CHANNEL: '@newsLightGG'
+          MAX_POST_AGE_HOURS: '10'
+          MIN_NEWS_SCORE: '4.5'
+        run: python autopost_news.py
