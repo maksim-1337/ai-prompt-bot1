@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "events": {
+    "apple_india_legacy_iphone_price_rise_2026-09-10": {"status": "already_proposed"},
+    "d3_social_platform_addictive_design_statement_2026-09-10": {"status": "already_proposed"},
+    "hello_games_cosmos_2026-09-09": {"status": "already_proposed"},
+    "renzo_rosso_be_brave_venice_premiere_2026-09-10": {"status": "already_proposed"},
+    "roblox_everywhere_browser_offline_announcement_2026-09-11": {
+      "status": "published",
+      "published_at": "2026-09-12T08:34:36+00:00",
+      "title": "Roblox готовит игры без установки приложения",
+      "channel": "@newsLightGG",
+      "message_id": 17,
+      "url": "https://t.me/newsLightGG/17",
+      "format": "text; published before photo mode"
+    }
+  }
+}

@@ -1,9 +1,16 @@
-name: NewsLightGG Autopilot
+name: NewsLightGG Photo Autopilot
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "47 */3 * * *"
+  push:
+    branches: [main]
+    paths:
+      - 'data/editorial-queue/*.json'
+      - 'photo_publish.py'
+      - 'tests/test_photo_publish.py'
+      - '.github/workflows/news-autopilot.yml'
 
 concurrency:
   group: newslightgg-news-autopilot
@@ -15,42 +22,28 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install Python dependencies
+          python-version: '3.11'
+      - name: Test photo delivery and duplicate protection
+        run: python -m unittest discover -s tests -p test_photo_publish.py -v
+      - name: Configure state author
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Find, build and publish news
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHANNEL: "@newsLightGG"
-          MAX_POST_AGE_HOURS: "10"
-          MIN_NEWS_SCORE: "4.5"
-        run: python styled_publish.py
-
-      - name: Save published-news state
-        if: success()
-        run: |
-          if git diff --quiet -- data/seen.json && test -z "$(git status --porcelain -- data/video-inbox.json)"; then
-            echo "No state changes"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/seen.json data/video-inbox.json
-          git commit -m "Update published news state"
-          git push
+      - name: Publish at most one verified photo post
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python photo_publish.py
+      - name: Preserve receipt if state push failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photo-publication-receipt-${{ github.run_id }}
+          path: data/photo-publications.json
+          retention-days: 14
