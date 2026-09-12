@@ -31,7 +31,7 @@
     },
     {
       "story_id": "d1d82f6d20e9f4beb84c2649",
-      "status": "pending",
+      "status": "published",
       "created_at": "2026-09-12T19:25:04+00:00",
       "publish_after": "2026-09-12T20:25:04+00:00",
       "title": "ИИ ускоряет совершенствование самого себя — глава Anthropic предложил «нажать на тормоз» ради безопасности человечества",
@@ -39,6 +39,20 @@
       "source": "iXBT",
       "source_url": "https://www.ixbt.com/news/2026/09/12/435368-ii-uskoriaet-soversenstvovanie-samogo-sebia-glava-anthropic-predlozil-nazat-na-tormoz-radi-bezopasnosti-celovecestva.html",
       "editorial_score": 10.6,
+      "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip.",
+      "published_at": "2026-09-12T22:21:26+00:00",
+      "message_id": 26
+    },
+    {
+      "story_id": "c75bf9cf515dd78129661478",
+      "status": "pending",
+      "created_at": "2026-09-12T22:21:37+00:00",
+      "publish_after": "2026-09-12T23:21:37+00:00",
+      "title": "Я написал честный сайт с кейсами CS2",
+      "text": "Я написал честный сайт с кейсами CS2.\n\nПару месяцев назад я поймал себя на вопросе, на который не мог ответить внятно: когда открываешь кейс на одном из этих сайтов — тебя обманывают на самом ролле или как-то иначе?\n\nСайтов с кейсами CS2 десятки, деньги там крутятся серьёзные, и при этом ни один не публикует исходники. Снаружи — крутящаяся лента и кнопка «открыть».\n\nГеймеры это точно заметят. 🎮",
+      "source": "Habr",
+      "source_url": "https://habr.com/ru/articles/1081642/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1081642",
+      "editorial_score": 9.2,
       "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip."
     }
   ]
