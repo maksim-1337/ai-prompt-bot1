@@ -3,7 +3,7 @@ name: NewsLightGG Autopilot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 * * * *"
   push:
     branches: [main]
     paths:
