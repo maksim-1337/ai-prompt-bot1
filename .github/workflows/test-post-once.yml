@@ -1,0 +1,104 @@
+name: NewsLightGG Test Post Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-post-once.yml'
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install Pillow==11.1.0 requests==2.32.3
+      - name: Create and send test post
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          python - <<'PY'
+          import math, os, random
+          from PIL import Image, ImageDraw, ImageFilter, ImageFont
+          import requests
+
+          W,H=1080,1350
+          img=Image.new('RGB',(W,H),(5,10,28))
+          px=img.load()
+          for y in range(H):
+              t=y/H
+              for x in range(W):
+                  r=int(7+18*t+18*(x/W))
+                  g=int(12+17*t+8*(x/W))
+                  b=int(35+65*(1-t)+55*(x/W))
+                  px[x,y]=(r,g,b)
+          draw=ImageDraw.Draw(img)
+          random.seed(42)
+          for _ in range(260):
+              x=random.randrange(W); y=random.randrange(H)
+              rr=random.choice([1,1,1,2,2,3])
+              a=random.randrange(150,255)
+              draw.ellipse((x-rr,y-rr,x+rr,y+rr),fill=(a,a,min(255,a+20)))
+
+          glow=Image.new('RGBA',(W,H),(0,0,0,0))
+          gd=ImageDraw.Draw(glow)
+          gd.ellipse((170,300,910,1040),fill=(35,105,255,90))
+          glow=glow.filter(ImageFilter.GaussianBlur(90))
+          img=Image.alpha_composite(img.convert('RGBA'),glow)
+          draw=ImageDraw.Draw(img)
+
+          # stylized planet / digital world
+          draw.ellipse((250,375,830,955),fill=(28,55,112,255),outline=(105,185,255,255),width=5)
+          for i in range(9):
+              yy=430+i*56
+              draw.arc((285,yy-120,795,yy+120),0,360,fill=(85,175,255,110),width=2)
+          for ang in range(-60,61,20):
+              cx,cy=540,665
+              rx=245
+              draw.arc((cx-rx,cy-290,cx+rx,cy+290),90-ang,270-ang,fill=(75,160,255,105),width=2)
+          # orbit rings
+          draw.ellipse((110,500,970,835),outline=(145,105,255,210),width=8)
+          draw.ellipse((145,525,935,810),outline=(70,205,255,130),width=3)
+
+          font_paths=['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf','/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf']
+          regular_paths=['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf','/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf']
+          def get_font(paths,size):
+              for p in paths:
+                  if os.path.exists(p): return ImageFont.truetype(p,size)
+              return ImageFont.load_default()
+          fb=get_font(font_paths,66); fr=get_font(regular_paths,31); fs=get_font(font_paths,31)
+
+          # headline panels, no channel branding
+          draw.rounded_rectangle((55,55,1025,250),radius=34,fill=(4,10,28,205),outline=(255,255,255,45),width=2)
+          draw.text((90,88),'ТЕСТ: АВТОПОСТИНГ',font=fb,fill='white')
+          draw.text((90,167),'Картинка + текст + отправка в Telegram',font=fr,fill=(205,225,255))
+
+          draw.rounded_rectangle((75,1070,485,1235),radius=34,fill=(14,32,70,225),outline=(115,190,255,100),width=2)
+          draw.text((108,1100),'АВТОМАТИЧЕСКИ',font=fs,fill='white')
+          draw.text((108,1150),'без ручной отправки',font=fr,fill=(205,225,255))
+          draw.rounded_rectangle((595,1070,1005,1235),radius=34,fill=(45,24,75,225),outline=(190,130,255,100),width=2)
+          draw.text((628,1100),'ПРОВЕРКА СВЯЗКИ',font=fs,fill='white')
+          draw.text((628,1150),'GitHub → Telegram',font=fr,fill=(225,210,255))
+
+          path='/tmp/test-post.jpg'
+          img.convert('RGB').save(path,'JPEG',quality=93,optimize=True)
+
+          token=os.environ.get('TELEGRAM_BOT_TOKEN','').strip()
+          if not token: raise SystemExit('TELEGRAM_BOT_TOKEN missing')
+          caption=(
+              '<b>🧪 Тестовый пост автопостинга</b>\n\n'
+              'Проверяю полную цепочку: создание обложки, подготовка текста и автоматическая отправка поста в Telegram.\n\n'
+              'Если это сообщение появилось в канале вместе с картинкой — Telegram-часть системы работает правильно.'
+          )
+          with open(path,'rb') as f:
+              r=requests.post(f'https://api.telegram.org/bot{token}/sendPhoto',data={'chat_id':'@newsLightGG','caption':caption,'parse_mode':'HTML'},files={'photo':('test-post.jpg',f,'image/jpeg')},timeout=60)
+          print('Telegram status:',r.status_code)
+          data=r.json(); print('Telegram ok:',data.get('ok'))
+          if not data.get('ok'):
+              print(data.get('description','unknown Telegram error'))
+              raise SystemExit(1)
+          print('PUBLISHED message_id=',data['result']['message_id'])
+          PY
