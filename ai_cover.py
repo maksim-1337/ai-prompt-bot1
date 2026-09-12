@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 import main as news
 
 OUT_DIR = Path("output/autopost")
-OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2.5-flare")
+OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2")
 OPENAI_IMAGE_QUALITY = os.getenv("OPENAI_IMAGE_QUALITY", "low")
 
 FONT_CANDIDATES = {
@@ -100,7 +100,6 @@ def generate_base_image(story: news.Story) -> Image.Image:
         timeout=180,
     )
     if not response.ok:
-        # Never log the API key or full provider response.
         raise RuntimeError(f"OpenAI image generation failed with HTTP {response.status_code}")
 
     payload = response.json()
@@ -180,7 +179,6 @@ def compose_poster(story: news.Story, generated: Image.Image, out: Path) -> Path
     width, height = 1080, 1350
     image = ImageOps.fit(generated, (width, height), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5)).convert("RGBA")
 
-    # Darken only the text zones, preserving the AI visual in the center.
     shade = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     shade_draw = ImageDraw.Draw(shade)
     for y in range(0, 520):
@@ -200,7 +198,6 @@ def compose_poster(story: news.Story, generated: Image.Image, out: Path) -> Path
 
     y = 72
     for line in title_lines:
-        # soft shadow + crisp white type
         draw.text((77, y + 4), line, font=title_font, fill=(0, 0, 0, 165), stroke_width=2, stroke_fill=(0, 0, 0, 130))
         draw.text((72, y), line, font=title_font, fill=(255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 90))
         y += title_size + 12
@@ -244,7 +241,6 @@ def self_test() -> None:
         published=news.datetime.now(news.timezone.utc),
         category="games",
     )
-    # Offline composition test: no paid API call.
     base = Image.new("RGB", (1024, 1536), (22, 55, 118))
     d = ImageDraw.Draw(base)
     d.ellipse((220, 360, 820, 960), fill=(58, 126, 235))
