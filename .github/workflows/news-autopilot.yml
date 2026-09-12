@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - 'autopost_news.py'
+      - 'autopost_runner.py'
+      - 'news_sources.py'
       - 'main.py'
       - 'requirements.txt'
       - '.github/workflows/news-autopilot.yml'
@@ -49,6 +51,6 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
-          MAX_POST_AGE_HOURS: '10'
-          MIN_NEWS_SCORE: '4.5'
-        run: python autopost_news.py
+          MAX_POST_AGE_HOURS: '18'
+          MIN_NEWS_SCORE: '3.8'
+        run: python autopost_runner.py
