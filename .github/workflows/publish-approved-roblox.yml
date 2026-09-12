@@ -1,0 +1,70 @@
+name: Publish approved Roblox post
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-approved-roblox.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: newslightgg-news-autopilot
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Configure receipt author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Publish approved post once
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        shell: python
+        run: |
+          import json, os, subprocess, sys, urllib.request
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p = Path("data/approved-roblox-20260911.json")
+          if p.exists():
+              print("Already attempted; inspect receipt. No duplicate send.")
+              sys.exit(0)
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          def api(method, data):
+              req = urllib.request.Request("https://api.telegram.org/bot" + token + "/" + method, data=json.dumps(data).encode(), headers={"Content-Type": "application/json"})
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      result = json.load(r)
+              except Exception:
+                  raise RuntimeError("Telegram request failed; no automatic retry") from None
+              if not result.get("ok"):
+                  raise RuntimeError("Telegram rejected request")
+              return result["result"]
+          me = api("getMe", {})
+          assert me.get("username", "").lower() == "purplehelperbot", "Unexpected bot"
+          chat = api("getChat", {"chat_id": "@newsLightGG"})
+          assert chat.get("username", "").lower() == "newslightgg" and chat.get("type") == "channel", "Unexpected channel"
+          rights = api("getChatMember", {"chat_id": chat["id"], "user_id": me["id"]})
+          assert rights.get("status") == "administrator" and rights.get("can_post_messages"), "Missing publishing rights"
+          def save(record):
+              p.parent.mkdir(exist_ok=True)
+              p.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+              subprocess.run(["git", "add", str(p)], check=True)
+              subprocess.run(["git", "commit", "-m", "Record approved Roblox publication state"], check=True)
+              subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
+          record = {"event_key": "roblox_everywhere_browser_offline_announcement_2026-09-11", "channel": "@newsLightGG", "chat_id": chat["id"], "status": "sending", "attempted_at": datetime.now(timezone.utc).isoformat()}
+          save(record)
+          try:
+              message = api("sendMessage", {"chat_id": chat["id"], "text": "🎮 <b>Roblox готовит игры без установки приложения</b>\n\nДо конца 2026 года Roblox обещает запуск игр прямо в Chrome — по ссылке, без скачивания приложения. Поддержку других браузеров добавят позже. Об этом компания объявила 11 сентября на конференции разработчиков.\n\nЕщё один план — позволить авторам выпускать свои игры отдельными приложениями для ПК, телефонов и консолей. Технологии Roblox останутся внутри, но заходить через общее приложение будет необязательно. Какие магазины подключат, пока уточняют.\n\nА к середине 2027 года обещают одиночную игру без интернета, если разработчик добавит такой режим. Важный нюанс: это анонс будущих возможностей, а не обновление, которое уже можно включить.", "parse_mode": "HTML", "link_preview_options": {"is_disabled": True}})
+              record.update(status="published", message_id=message["message_id"], url="https://t.me/newsLightGG/" + str(message["message_id"]))
+          except Exception:
+              record["status"] = "uncertain; check channel before retry"
+              save(record)
+              raise
+          save(record)
+          print("PUBLISHED " + record["url"])
+          
