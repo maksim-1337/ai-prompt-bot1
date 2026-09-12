@@ -40,6 +40,15 @@ jobs:
       - name: Install news dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Verify required secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          test -n "$TELEGRAM_BOT_TOKEN" || (echo "TELEGRAM_BOT_TOKEN is missing" && exit 1)
+          test -n "$OPENAI_API_KEY" || (echo "OPENAI_API_KEY is missing" && exit 1)
+          echo "Required secrets are present."
+
       - name: Self-test AI cover compositor and Telegram caption
         run: |
           python ai_cover.py --self-test
@@ -55,7 +64,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_IMAGE_MODEL: 'gpt-image-2.5-flare'
+          OPENAI_IMAGE_MODEL: 'gpt-image-2'
           OPENAI_IMAGE_QUALITY: 'low'
           MAX_POST_AGE_HOURS: '18'
           MIN_NEWS_SCORE: '3.8'
