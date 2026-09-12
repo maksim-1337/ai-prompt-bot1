@@ -7,9 +7,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'text_autopost_runner.py'
       - 'autopost_news.py'
-      - 'autopost_runner.py'
-      - 'ai_cover.py'
       - 'news_sources.py'
       - 'main.py'
       - 'requirements.txt'
@@ -40,32 +39,22 @@ jobs:
       - name: Install news dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Verify required secrets
+      - name: Verify Telegram secret
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           test -n "$TELEGRAM_BOT_TOKEN" || (echo "TELEGRAM_BOT_TOKEN is missing" && exit 1)
-          test -n "$OPENAI_API_KEY" || (echo "OPENAI_API_KEY is missing" && exit 1)
-          echo "Required secrets are present."
-
-      - name: Self-test AI cover compositor and Telegram caption
-        run: |
-          python ai_cover.py --self-test
-          python autopost_news.py --self-test
+          echo "Telegram secret is present."
 
       - name: Configure publication state author
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Find news, generate unique AI image and publish
+      - name: Find fresh news and publish text-only post
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL: '@newsLightGG'
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_IMAGE_MODEL: 'gpt-image-2'
-          OPENAI_IMAGE_QUALITY: 'low'
           MAX_POST_AGE_HOURS: '18'
           MIN_NEWS_SCORE: '3.8'
-        run: python autopost_runner.py
+        run: python text_autopost_runner.py
