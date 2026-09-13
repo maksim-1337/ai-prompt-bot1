@@ -55,12 +55,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub
-          key: editorial-rut5-safetensors-v1
+          key: editorial-rut5-safetensors-v2
       - name: Install local CPU paraphraser (no API credits)
         if: github.event_name != 'push'
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements-editorial-model.txt
+      - name: Verify local model can actually rewrite text
+        if: github.event_name != 'push'
+        env:
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python -m editorial.rewrite
       - name: Collect this hour's best candidates for review
         if: github.event_name != 'push'
         env:

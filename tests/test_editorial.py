@@ -21,6 +21,9 @@ TEXT = 'Telegram запустил новую функцию для всех по
 
 class DeskTests(unittest.TestCase):
     def setUp(self):
+        quiet = patch("builtins.print")
+        quiet.start()
+        self.addCleanup(quiet.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)

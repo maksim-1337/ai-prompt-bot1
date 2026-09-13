@@ -73,7 +73,7 @@ class LocalEditor:
 
         if self.model is None:
             torch.set_num_threads(2)
-            self.tokenizer = AutoTokenizer.from_pretrained(MODEL, trust_remote_code=False)
+            self.tokenizer = AutoTokenizer.from_pretrained(MODEL, trust_remote_code=False, use_fast=False)
             self.model = AutoModelForSeq2SeqLM.from_pretrained(
                 MODEL, trust_remote_code=False, use_safetensors=True,
             ).eval()
@@ -97,3 +97,10 @@ class LocalEditor:
         text = "\n\n".join(blocks)
         validate_post(text)
         return text
+
+
+if __name__ == "__main__":
+    # Exercise tokenizer, model loading AND inference; import-only checks missed protobuf.
+    editor = LocalEditor()
+    editor.paraphrase("Компания представила новое приложение для пользователей.")
+    print("Local text model inference: OK (no paid API)")
