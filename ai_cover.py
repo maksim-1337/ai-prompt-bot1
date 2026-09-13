@@ -78,6 +78,7 @@ def visual_prompt(story: news.Story) -> str:
 
 
 def generate_base_image(story: news.Story) -> Image.Image:
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError(

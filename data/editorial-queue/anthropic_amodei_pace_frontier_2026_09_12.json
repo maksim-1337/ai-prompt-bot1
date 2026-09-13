@@ -39,7 +39,8 @@
       "url": "https://www.theverge.com/ai-artificial-intelligence/994337/anthropic-ceo-slow-down-ai-development"
     }
   ],
-  "status": "ready",
+  "status": "skip",
+  "editor_note": "Фотоочередь отключена. Событие уже опубликовано текстом (message_id 26); повтор не нужен.",
   "title": "🧠 Глава Anthropic призвал притормозить гонку ИИ",
   "verification": {
     "level": "official_announcement",

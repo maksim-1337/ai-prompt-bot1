@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "events": {
+    "8298b8b1a9a1ce77b8c8e0fc": {
+      "title": "Минпросвещения разъяснило правила использования ИИ школьниками",
+      "published_at": "2026-09-12T10:49:24.670489+00:00",
+      "message_id": 18,
+      "source": "Коммерсантъ",
+      "source_url": "https://www.kommersant.ru/doc/8953396",
+      "image_page": "https://commons.wikimedia.org/wiki/File:100mw_AI_orbital_super_computer.webp",
+      "image_license": "CC0",
+      "cover": "output/autopost/8298b8b1a9a1ce77b8c8e0fc.jpg",
+      "status": "published",
+      "url": "https://www.kommersant.ru/doc/8953396",
+      "legacy": true
+    },
+    "406d2a733ad45a4090d76e8c": {
+      "title": "Мощный мини-ПК, NAS или ИИ-сервер? Представлен Ugreen iDX6011 Pro на базе 16-ядерного Intel Core Ultra 7 255H, и он поддерживает до 208 ТБ памяти",
+      "published_at": "2026-09-12T11:53:27.617899+00:00",
+      "message_id": 20,
+      "source": "iXBT",
+      "source_url": "https://www.ixbt.com/news/2026/09/12/435335-moshhnyi-mini-pk-nas-ili-ii-server-predstavlen-ugreen-idx6011-pro-na-baze-16-iadernogo-intel-core-ultra-7-255h-i-on-podderzivaet-do-208-tb-pamiati.html",
+      "mode": "text-only",
+      "status": "published",
+      "url": "https://www.ixbt.com/news/2026/09/12/435335-moshhnyi-mini-pk-nas-ili-ii-server-predstavlen-ugreen-idx6011-pro-na-baze-16-iadernogo-intel-core-ultra-7-255h-i-on-podderzivaet-do-208-tb-pamiati.html",
+      "legacy": true
+    },
+    "36715f61604bd76deb5c6951": {
+      "title": "Сыгравший на ЧМ защитник сборной Колумбии Мачадо перешел в «Родину»",
+      "published_at": "2026-09-12T12:24:15.733855+00:00",
+      "message_id": 22,
+      "source": "Коммерсантъ",
+      "source_url": "https://www.kommersant.ru/doc/8953424",
+      "mode": "text-only-yep-like",
+      "editorial_score": 12.7,
+      "status": "published",
+      "url": "https://www.kommersant.ru/doc/8953424",
+      "legacy": true
+    },
+    "a97433f9a3af505093344a62": {
+      "title": "Более 2 млн атмосфер и 1500 °C: ученые открыли новую форму горячего льда, который, предположительно, скрыт в недрах Урана и Нептуна",
+      "published_at": "2026-09-12T12:29:53.368876+00:00",
+      "message_id": 23,
+      "source": "iXBT",
+      "source_url": "https://www.ixbt.com/news/2026/09/12/435341-bolee-2-mln-atmosfer-i-1500-c-ucenye-otkryli-novuiu-formu-goriacego-lda-kotoryi-predpolozitelno-skryt-v-nedrax-urana-i-neptuna.html",
+      "mode": "text-only-yep-like",
+      "editorial_score": 10.2,
+      "status": "published",
+      "url": "https://www.ixbt.com/news/2026/09/12/435341-bolee-2-mln-atmosfer-i-1500-c-ucenye-otkryli-novuiu-formu-goriacego-lda-kotoryi-predpolozitelno-skryt-v-nedrax-urana-i-neptuna.html",
+      "legacy": true
+    },
+    "67723a618edf3ec27a059399": {
+      "title": "Biostar рекламирует GeForce GT 730, о которой уже все давно забыли",
+      "published_at": "2026-09-12T16:21:23+00:00",
+      "message_id": 24,
+      "source": "iXBT",
+      "source_url": "https://www.ixbt.com/news/2026/09/12/biostar-reklamiruet-geforce-gt-730-o-kotoroi-uze-vse-davno-zabyli.html",
+      "mode": "draft-delay-text",
+      "status": "published",
+      "url": "https://www.ixbt.com/news/2026/09/12/biostar-reklamiruet-geforce-gt-730-o-kotoroi-uze-vse-davno-zabyli.html",
+      "legacy": true
+    },
+    "6a32a41b8fe2d434c6ee8476": {
+      "title": "Норрис сенсационно выиграл квалификацию Гран-при Испании \"Формулы-1\"",
+      "published_at": "2026-09-12T19:24:54+00:00",
+      "message_id": 25,
+      "source": "РИА Новости",
+      "source_url": "https://ria.ru/20260912/formula-1-2117330324.html",
+      "mode": "draft-delay-text",
+      "status": "published",
+      "url": "https://ria.ru/20260912/formula-1-2117330324.html",
+      "legacy": true
+    },
+    "d1d82f6d20e9f4beb84c2649": {
+      "title": "ИИ ускоряет совершенствование самого себя — глава Anthropic предложил «нажать на тормоз» ради безопасности человечества",
+      "published_at": "2026-09-12T22:21:26+00:00",
+      "message_id": 26,
+      "source": "iXBT",
+      "source_url": "https://www.ixbt.com/news/2026/09/12/435368-ii-uskoriaet-soversenstvovanie-samogo-sebia-glava-anthropic-predlozil-nazat-na-tormoz-radi-bezopasnosti-celovecestva.html",
+      "mode": "draft-delay-text",
+      "status": "published",
+      "url": "https://www.ixbt.com/news/2026/09/12/435368-ii-uskoriaet-soversenstvovanie-samogo-sebia-glava-anthropic-predlozil-nazat-na-tormoz-radi-bezopasnosti-celovecestva.html",
+      "legacy": true
+    },
+    "c75bf9cf515dd78129661478": {
+      "title": "Я написал честный сайт с кейсами CS2",
+      "published_at": "2026-09-13T01:04:09+00:00",
+      "message_id": 27,
+      "source": "Habr",
+      "source_url": "https://habr.com/ru/articles/1081642/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1081642",
+      "mode": "draft-delay-text",
+      "status": "published",
+      "url": "https://habr.com/ru/articles/1081642/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1081642",
+      "legacy": true
+    }
+  }
+}

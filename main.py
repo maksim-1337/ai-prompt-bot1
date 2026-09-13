@@ -600,6 +600,7 @@ def make_video(story: Story) -> Path:
 
 
 def telegram_send_video(video: Path, caption: str) -> None:
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     if not BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is missing")
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendVideo"
@@ -622,6 +623,7 @@ def telegram_send_video(video: Path, caption: str) -> None:
 
 
 def main() -> None:
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     seen_list = load_seen()
     stories = fetch_stories()
     print(f"Fetched {len(stories)} candidate stories")

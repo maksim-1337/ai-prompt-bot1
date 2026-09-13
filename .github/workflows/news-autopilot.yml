@@ -1,10 +1,79 @@
-name: NewsLightGG Autopilot
+name: NewsLightGG Editorial Review
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'data/drafts/review/**'
+      - 'editorial/**'
+      - 'draft_queue_runner.py'
+      - 'requirements-editorial*.txt'
+      - '.github/workflows/news-autopilot.yml'
+      - 'tests/test_editorial.py'
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: newslightgg-news-autopilot
+  cancel-in-progress: false
 jobs:
-  paused:
+  editorial:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - run: echo 'Timer publishing disabled. Editorial review migration in progress.'
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: 'requirements-editorial*.txt'
+      - name: Install text-only dependencies
+        run: pip install -r requirements-editorial.txt
+      - name: Verify editorial safety and syntax
+        run: |
+          python -m unittest discover -s tests -p test_editorial.py -v
+          python -m compileall -q editorial draft_queue_runner.py
+          python -m editorial.desk check
+      - name: Configure receipt author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Publish only approved Markdown drafts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          test -n "$TELEGRAM_BOT_TOKEN" || (echo 'TELEGRAM_BOT_TOKEN missing' && exit 1)
+          echo 'Telegram secret is present; no token is printed.'
+          python -m editorial.desk publish --git
+      - name: Cache local text model
+        if: github.event_name != 'push'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: editorial-rut5-safetensors-v1
+      - name: Install local CPU paraphraser (no API credits)
+        if: github.event_name != 'push'
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-editorial-model.txt
+      - name: Collect this hour's best candidates for review
+        if: github.event_name != 'push'
+        env:
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python -m editorial.desk collect --git
+      - name: Preserve receipts if a commit or push failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial-recovery-${{ github.run_id }}
+          path: |
+            data/editorial-history.json
+            data/editorial-state.json
+            data/drafts/
+          retention-days: 30

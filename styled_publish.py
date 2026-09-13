@@ -106,6 +106,7 @@ def styled_make_video(story: bot.Story):
 
 
 def styled_send_video(video, caption: str) -> None:
+    raise RuntimeError("Legacy channel publication disabled; use approved Markdown drafts")
     if not bot.BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is missing")
     url = f"https://api.telegram.org/bot{bot.BOT_TOKEN}/sendVideo"

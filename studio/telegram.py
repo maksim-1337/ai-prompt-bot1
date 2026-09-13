@@ -12,6 +12,9 @@ class Telegram:
         self.base = f"https://api.telegram.org/bot{token}/"
 
     def call(self, method, data=None, files=None):
+        target = str((data or {}).get("chat_id", ""))
+        if method.startswith(("send", "copy", "forward")) and (target.startswith("-") or target.startswith("@")):
+            raise RuntimeError("Studio channel sends disabled; use approved Markdown drafts")
         try:
             r = requests.post(self.base + method, data=data or {}, files=files, timeout=120)
             obj = r.json()

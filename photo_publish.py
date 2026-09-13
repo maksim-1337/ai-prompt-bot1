@@ -140,6 +140,7 @@ class TelegramRejected(RuntimeError):
 
 
 def api(method, data):
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     if method not in ("getMe", "getChat", "getChatMember", "sendPhoto"):
         raise ValueError("Unsupported method")
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -217,6 +218,7 @@ def publish(post, state, now, save=save_state, call=api):
 
 
 def main():
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", metavar="POST_JSON", help="Validate locally without secrets, network or sending")
     args = parser.parse_args()

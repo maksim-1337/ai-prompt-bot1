@@ -368,6 +368,7 @@ def draw_cover(story: news.Story, source: Image.Image, image_meta: dict, out: Pa
 
 
 def telegram_send_photo(photo: Path, caption: str) -> dict:
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     if not BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN missing")
     with photo.open("rb") as handle:
@@ -419,6 +420,7 @@ def self_test() -> None:
 
 
 def main() -> None:
+    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
