@@ -102,6 +102,19 @@ class DeskTests(unittest.TestCase):
             self.desk.publish()
         self.sender.assert_not_called()
 
+    def test_cancelled_before_send_can_be_reapproved(self):
+        path = self.draft("approved")
+        meta, text, notes = read_draft(path)
+        cancelled = dict(meta, status="skip")
+        self.desk.latest = lambda _: (cancelled, text, notes)
+        with self.assertRaises(RuntimeError):
+            self.desk.publish()
+        self.sender.assert_not_called()
+        self.desk.latest = read_draft
+        self.assertEqual(self.desk.publish(), 1)
+        self.assertEqual(self.desk.history["cancelled_attempts"][0]["status"], "cancelled_before_send")
+        self.assertEqual(self.sender.call_count, 1)
+
     def test_timeout_and_missing_id_never_retry(self):
         for mode in ("timeout", "missing"):
             with self.subTest(mode=mode):
@@ -188,6 +201,15 @@ class DeskTests(unittest.TestCase):
         self.desk.collect(lambda: ([Story("NASA впервые открыли новый мир", "Подробности открытия подтвердили исследователи. Новая планета находится в далекой системе и ранее не была известна.", "3DNews", "https://3dnews.ru/other", NOW)], []), Mock(compose=lambda *_: TEXT), lambda s: s)
         self.assertEqual(path.read_bytes(), before)
         self.assertLessEqual(len(self.desk.drafts()), 3)
+
+    def test_stale_reviews_free_capacity_without_losing_text(self):
+        paths = [self.draft("review", key=f"oldrev00{i}", news_published_at=iso(NOW - timedelta(days=1))) for i in range(3)]
+        story = Story("NASA впервые открыли новую планету", "Подробности открытия подтвердили исследователи. Результаты наблюдений впервые опубликованы в научном журнале.", "3DNews", "https://3dnews.ru/new", NOW)
+        self.assertEqual(self.desk.collect(lambda: ([story], []), Mock(compose=lambda *_: TEXT), lambda s: s), 1)
+        for path in paths:
+            meta, text, _ = read_draft(path)
+            self.assertEqual(meta["status"], "skip")
+            self.assertEqual(text, TEXT)
 
     def test_model_failure_creates_review_not_copied_post(self):
         s = Story("NASA впервые обнаружили воду на экзопланете", "Подробности открытия подтвердили исследователи. Результаты наблюдений впервые опубликованы в научном журнале.", "3DNews", "https://3dnews.ru/planet", NOW)

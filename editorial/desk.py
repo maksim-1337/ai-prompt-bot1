@@ -133,6 +133,11 @@ class Desk:
             if meta["status"] != "approved":
                 continue
             key = meta["id"]
+            previous = self.history["events"].get(key)
+            if previous and previous.get("status") == "cancelled_before_send":
+                # This state proves that the transport was never called. Preserve
+                # the cancellation audit while allowing the current approved edit.
+                self.history.setdefault("cancelled_attempts", []).append(self.history["events"].pop(key))
             if key in self.history["events"]:
                 event = self.history["events"][key]
                 if event.get("status") == "published":
@@ -151,7 +156,7 @@ class Desk:
                 write_draft(path, meta, text, notes)
                 self.save()
                 continue
-            if any(event.get("url", event.get("source_url")) == url or same_event(meta.get("title", ""), event.get("title", "")) for event in self.history["events"].values()):
+            if any(event.get("url", event.get("source_url")) == url or same_event(meta.get("title", ""), event.get("title", "")) for event in self.history["events"].values() if event.get("status") != "cancelled_before_send"):
                 meta.update(status="skip", editor_note="Дубль новости из истории отправок/попыток.")
                 write_draft(path, meta, text, notes)
                 self.save()
@@ -194,6 +199,16 @@ class Desk:
             print("This UTC hour has already been collected")
             return 0
         drafts = self.drafts()
+        for path, meta, text, notes in drafts:
+            if meta["status"] != "review":
+                continue
+            try:
+                age = now - parse_time(meta.get("news_published_at"))
+            except (ValueError, TypeError):
+                continue  # Unknown legacy dates need a human check, never invented.
+            if age > MAX_AGE:
+                meta.update(status="skip", editor_note="Срок свежести 18 часов истёк. Текст сохранён, место в очереди освобождено.")
+                write_draft(path, meta, text, notes)
         capacity = max(0, 3 - sum(meta["status"] in {"review", "approved"} for _, meta, _, _ in drafts))
         stories, feed_notes = fetch()
         for note in feed_notes:
