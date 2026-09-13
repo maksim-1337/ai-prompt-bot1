@@ -45,7 +45,7 @@
     },
     {
       "story_id": "c75bf9cf515dd78129661478",
-      "status": "pending",
+      "status": "published",
       "created_at": "2026-09-12T22:21:37+00:00",
       "publish_after": "2026-09-12T23:21:37+00:00",
       "title": "Я написал честный сайт с кейсами CS2",
@@ -53,6 +53,20 @@
       "source": "Habr",
       "source_url": "https://habr.com/ru/articles/1081642/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1081642",
       "editorial_score": 9.2,
+      "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip.",
+      "published_at": "2026-09-13T01:04:09+00:00",
+      "message_id": 27
+    },
+    {
+      "story_id": "0c1b1281d3782c24cc90ff41",
+      "status": "pending",
+      "created_at": "2026-09-13T01:04:16+00:00",
+      "publish_after": "2026-09-13T02:04:16+00:00",
+      "title": "OpenAI отложила выход на IPO из-за вопросов безопасности",
+      "text": "OpenAI отложила выход на IPO из-за вопросов безопасности.\n\nOpenAI, которая разработала ИИ-модель ChatGPT, не будет проводить IPO в 2026 году из-за вопросов, связанных с безопасностью, сообщил глава компании Сэм Альтман.\n\nВ разговоре с журналом Fortune Cэм Альтман не ответил на вопрос, проведет ли компания IPO в 2027 году.\n\nКажется, слово «фантастика» пора обновлять. 🤖",
+      "source": "Коммерсантъ",
+      "source_url": "https://www.kommersant.ru/doc/8953540",
+      "editorial_score": 11.0,
       "edit_hint": "Можно изменить поле text. Чтобы отменить публикацию, поменяй status на skip."
     }
   ]
