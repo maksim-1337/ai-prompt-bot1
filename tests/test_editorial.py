@@ -304,8 +304,10 @@ class QualityTests(unittest.TestCase):
         live = [p for p in workflows if "secrets.TELEGRAM_BOT_TOKEN" in p.read_text()]
         self.assertEqual([p.name for p in live], ["news-autopilot.yml"])
         workflow = live[0].read_text()
-        self.assertIn("data/drafts/review/**", workflow)
-        self.assertIn("17 * * * *", workflow)
+        self.assertIn("data/editorial-queue/**", workflow)
+        self.assertIn("run: python photo_publish.py", workflow)
+        self.assertNotIn("editorial.desk publish", workflow)
+        self.assertIn("47 */3 * * *", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
         self.assertNotIn("OPENAI_API_KEY", workflow)
         self.assertNotIn("DRAFT_DELAY", workflow)
