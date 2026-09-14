@@ -60,6 +60,13 @@ class PhotoTests(unittest.TestCase):
         self.assertFalse(p.publish(self.post, restored, self.now, save=Mock(), call=send))
         send.assert_not_called()
 
+    def test_eight_posts_per_rolling_day(self):
+        self.state["events"] = {
+            str(i): {"status": "published", "published_at": (self.now - timedelta(hours=3 + i * 2)).isoformat()}
+            for i in range(8)
+        }
+        self.assertFalse(p.due(self.state, self.now))
+
     def test_stale_unread_or_wrong_photo_is_rejected(self):
         mutations = [lambda x: x.update(news_published_at="2026-09-10T10:00:00Z"),
                      lambda x: x.update(channel="@someoneelse"),

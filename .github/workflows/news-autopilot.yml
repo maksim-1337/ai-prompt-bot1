@@ -1,27 +1,25 @@
-name: NewsLightGG Editorial Review
+name: NewsLightGG Photo Autopilot
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '47 */3 * * *'
   push:
     branches: [main]
     paths:
-      - 'data/drafts/review/**'
-      - 'editorial/**'
-      - 'draft_queue_runner.py'
-      - 'requirements-editorial*.txt'
+      - 'data/editorial-queue/**'
+      - 'photo_publish.py'
+      - 'tests/test_photo_publish.py'
       - '.github/workflows/news-autopilot.yml'
-      - 'tests/test_editorial.py'
 permissions:
   contents: write
 concurrency:
   group: newslightgg-news-autopilot
   cancel-in-progress: false
 jobs:
-  editorial:
+  publish:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,56 +28,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: pip
-          cache-dependency-path: 'requirements-editorial*.txt'
-      - name: Install text-only dependencies
-        run: pip install -r requirements-editorial.txt
-      - name: Verify editorial safety and syntax
+      - name: Check photo publisher
         run: |
-          python -m unittest discover -s tests -p test_editorial.py -v
-          python -m compileall -q editorial draft_queue_runner.py
-          python -m editorial.desk check
+          python -m unittest discover -s tests -p test_photo_publish.py -v
+          python -m py_compile photo_publish.py
       - name: Configure receipt author
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Publish only approved Markdown drafts
+      - name: Publish one verified photo post without owner review
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: |
-          test -n "$TELEGRAM_BOT_TOKEN" || (echo 'TELEGRAM_BOT_TOKEN missing' && exit 1)
-          echo 'Telegram secret is present; no token is printed.'
-          python -m editorial.desk publish --git
-      - name: Cache local text model
-        if: github.event_name != 'push'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/huggingface/hub
-          key: editorial-rut5-safetensors-v2
-      - name: Install local CPU paraphraser (no API credits)
-        if: github.event_name != 'push'
-        run: |
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements-editorial-model.txt
-      - name: Verify local model can actually rewrite text
-        if: github.event_name != 'push'
-        env:
-          HF_HUB_DISABLE_TELEMETRY: '1'
-          TOKENIZERS_PARALLELISM: 'false'
-        run: python -m editorial.rewrite
-      - name: Collect this hour's best candidates for review
-        if: github.event_name != 'push'
-        env:
-          HF_HUB_DISABLE_TELEMETRY: '1'
-          TOKENIZERS_PARALLELISM: 'false'
-        run: python -m editorial.desk collect --git
-      - name: Preserve receipts if a commit or push failed
+        run: python photo_publish.py
+      - name: Preserve delivery receipt on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: editorial-recovery-${{ github.run_id }}
-          path: |
-            data/editorial-history.json
-            data/editorial-state.json
-            data/drafts/
+          name: photo-recovery-${{ github.run_id }}
+          path: data/photo-publications.json
           retention-days: 30

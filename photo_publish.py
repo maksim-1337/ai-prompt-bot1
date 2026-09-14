@@ -132,6 +132,8 @@ def due(state, now):
     if any(e.get("status") in ("sending", "uncertain") for e in state["events"].values()):
         return False
     times = [timestamp(e["published_at"]) for e in state["events"].values() if e.get("status") == "published"]
+    if sum(now - timedelta(hours=24) < t <= now for t in times) >= 8:
+        return False
     return not times or now - max(times) >= INTERVAL
 
 
@@ -140,7 +142,6 @@ class TelegramRejected(RuntimeError):
 
 
 def api(method, data):
-    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     if method not in ("getMe", "getChat", "getChatMember", "sendPhoto"):
         raise ValueError("Unsupported method")
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -218,7 +219,6 @@ def publish(post, state, now, save=save_state, call=api):
 
 
 def main():
-    raise RuntimeError("Legacy channel/image publishing disabled; use approved Markdown drafts.")
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", metavar="POST_JSON", help="Validate locally without secrets, network or sending")
     args = parser.parse_args()

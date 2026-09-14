@@ -1,4 +1,4 @@
-# Telegram photo edition — active from 12 September 2026
+# Telegram photo edition — restored by owner on 14 September 2026
 
 The owner explicitly authorized automatic publication to **@newsLightGG** without
 approval, with one relevant still photograph and Russian text, approximately every
@@ -6,6 +6,14 @@ approval, with one relevant still photograph and Russian text, approximately eve
 The known numeric channel ID is **-1004433817207**; the bot is **@PurpleHelperBot**.
 Do not ask the owner to approve each Telegram post. Video/social approval remains a
 separate workflow and is not permission to publish videos in the Telegram channel.
+
+The owner's explicit confirmation on 14 September supersedes the 13 September
+manual `review` / `approved` mode. Old Markdown drafts remain history, never
+mass-approved. The photo editor must also read `data/editorial-history.json`,
+`data/autopost-state.json`, and all `data/drafts/review/` files for deduplication.
+Text receipts through message 27 have been reconciled into the photo ledger.
+The old Amodei photo candidate corresponds to message 26 and must not be resent.
+The rolling limit is eight publications in 24 hours in addition to three-hour spacing.
 
 ## How the pipeline runs
 
